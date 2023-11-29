@@ -21,9 +21,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 options.UseSqlServer(configuration.GetConnectionString("SqlCon"))
 );
 
-// No Need
-//builder.Services.AddMassTransitHostedService();
-
 builder.Services.AddControllers();
 
 
