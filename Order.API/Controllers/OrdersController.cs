@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using MassTransit;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Order.API.Dtos;
 using Order.API.Models;
+using Shared;
 
 namespace Order.API.Controllers
 {
@@ -11,9 +13,12 @@ namespace Order.API.Controllers
     {
         private readonly AppDbContext _context;
 
-        public OrdersController(AppDbContext context)
+        private readonly IPublishEndpoint _publishEndpoint;
+
+        public OrdersController(AppDbContext context, IPublishEndpoint publishEndpoint)
         {
             _context = context;
+            _publishEndpoint = publishEndpoint;
         }
 
         [HttpPost]
@@ -31,14 +36,35 @@ namespace Order.API.Controllers
             {
                 newOrder.Items.Add(new OrderItem
                 {
-                    Price=item.Price,
-                    ProductId=item.ProductId,
+                    Price = item.Price,
+                    ProductId = item.ProductId,
                     Count = item.Count
                 });
             }
 
             await _context.AddAsync(newOrder);
             await _context.SaveChangesAsync();
+
+            var orderCreatedEvent = new OrderCreatedEvent()
+            {
+                BuyerId=orderCreate.BuyerId,
+                OrderId=newOrder.Id,
+                Payment=new PaymentMessage
+                {
+                    CardName = orderCreate.Payment.CardName,
+                    CardNumber = orderCreate.Payment.CardNumber,
+                    Expiration = orderCreate.Payment.Expiration,
+                    CVV = orderCreate.Payment.CVV,
+                    TotalPrice = orderCreate.OrderItems.Sum(x => x.Price * x.Count)
+                }
+            };
+
+            foreach (var item in orderCreate.OrderItems)
+            {
+                orderCreatedEvent.OrderItems.Add(new OrderItemMessage { Count = item.Count, ProductId = item.ProductId });
+            }
+
+            await _publishEndpoint.Publish(orderCreatedEvent);
 
             return Ok();
         }

@@ -12,7 +12,7 @@
 
         public OrderStatus Status { get; set; }
 
-        public string FailMessage { get; set; }
+        public string? FailMessage { get; set; }
 
         public Address Address { get; set; }
     }
