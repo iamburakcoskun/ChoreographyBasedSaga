@@ -1,6 +1,5 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Shared;
 using Stock.API.Consumers;
 using Stock.API.Models;
@@ -14,7 +13,9 @@ IWebHostEnvironment environment = builder.Environment;
 // Masstransit-RabbitMQ Configuration
 builder.Services.AddMassTransit(config =>
 {
-    config.AddConsumer<OrderCreatedEventConsumer>();   
+    config.AddConsumer<OrderCreatedEventConsumer>();
+
+    config.AddConsumer<PaymentFailedEventConsumer>();
 
     config.UsingRabbitMq((ctx, cfg) =>
     {
@@ -24,14 +25,64 @@ builder.Services.AddMassTransit(config =>
         {
             e.ConfigureConsumer<OrderCreatedEventConsumer>(ctx);
         });
+
+        cfg.ReceiveEndpoint(RabbitMQSettings.StockPaymentFailedEventQueueName, e =>
+        {
+            e.ConfigureConsumer<PaymentFailedEventConsumer>(ctx);
+        });
     });
 });
-
 
 // Add services to the container.
 builder.Services.AddDbContext<AppDbContext>(options =>
 options.UseInMemoryDatabase("StockDb")
 );
+
+var sp = builder.Services.BuildServiceProvider();
+
+using (var scope = sp.CreateScope())
+{
+    var scopedServices = scope.ServiceProvider;
+    var db = scopedServices.GetRequiredService<AppDbContext>();
+
+    db.Database.EnsureDeleted();
+
+    db.Database.EnsureCreated();
+
+    InitializeDbForTests(db);
+
+    void InitializeDbForTests(AppDbContext db)
+    {
+        var isAdded = db.Stock.Any();
+
+        if (!isAdded)
+        {
+            List<Stock.API.Models.Stock> stockList = new()
+            {
+                new Stock.API.Models.Stock
+                {
+                    Id=1,
+                    ProductId = 1,
+                    Count = 100,
+                },
+                new Stock.API.Models.Stock
+                {
+                    Id = 2,
+                    ProductId = 2,
+                    Count = 100,
+                }
+            };
+
+            foreach (var stock in stockList)
+            {
+                db.Stock.Add(stock);
+
+            }
+
+            var amountAdded = db.SaveChanges();
+        }
+    }
+}
 
 
 builder.Services.AddControllers();

@@ -47,9 +47,9 @@ namespace Order.API.Controllers
 
             var orderCreatedEvent = new OrderCreatedEvent()
             {
-                BuyerId=orderCreate.BuyerId,
-                OrderId=newOrder.Id,
-                Payment=new PaymentMessage
+                BuyerId = orderCreate.BuyerId,
+                OrderId = newOrder.Id,
+                Payment = new PaymentMessage
                 {
                     CardName = orderCreate.Payment.CardName,
                     CardNumber = orderCreate.Payment.CardNumber,

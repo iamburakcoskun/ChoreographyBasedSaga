@@ -9,16 +9,5 @@ namespace Stock.API.Models
         }
 
         public DbSet<Stock> Stock { get; set; }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<Stock>().HasData(
-                new Stock
-                {
-                    ProductId = 1,
-                    Count = 100,
-                }
-            );
-        }
     }
 }

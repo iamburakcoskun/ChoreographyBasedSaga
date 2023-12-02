@@ -24,6 +24,8 @@ namespace Stock.API.Consumers
         {
             var stockResult = new List<bool>();
 
+            var amountofStock = await _appDbContext.Stock.ToListAsync();
+
             foreach (var item in context.Message.OrderItems)
             {
                 stockResult.Add(await _appDbContext.Stock.AnyAsync(x => x.ProductId == item.ProductId && x.Count > item.Count));
@@ -46,7 +48,7 @@ namespace Stock.API.Consumers
 
                 _logger.LogInformation($"Stock was reserved for Buyer Id:{context.Message.BuyerId}");
 
-                var sendEndPoint = await _sendEndpointProvider.GetSendEndpoint(new Uri(RabbitMQSettings.StockReservedEventQueueName));
+                var sendEndPoint = await _sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{RabbitMQSettings.StockReservedEventQueueName}"));
 
                 StockReservedEvent stockReserved = new()
                 {
@@ -71,4 +73,4 @@ namespace Stock.API.Consumers
         }
     }
 }
-}
+

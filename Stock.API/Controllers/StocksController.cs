@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Stock.API.Models;
 
 namespace Stock.API.Controllers
@@ -13,6 +14,11 @@ namespace Stock.API.Controllers
         public StocksController(AppDbContext context)
         {
             _context = context;
+        }
+
+        public async Task<IActionResult> Get()
+        {
+            return Ok(await _context.Stock.ToListAsync());
         }
     }
 }

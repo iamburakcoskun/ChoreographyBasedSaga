@@ -1,11 +1,9 @@
 ﻿namespace Shared
 {
-    public class StockNotReservedEvent
+    public class PaymentCompletedEvent
     {
         public int OrderId { get; set; }
 
         public string BuyerId { get; set; }
-
-        public string Message { get; set; }
     }
 }
